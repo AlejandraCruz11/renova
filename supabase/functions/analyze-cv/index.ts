@@ -28,12 +28,17 @@ Deno.serve(async (request) => {
     if (resumeFileBase64.length > 6000000) return Response.json({ error: "The PDF must be smaller than 4 MB." }, { status: 413, headers: corsHeaders });
 
     const prompt = `Compare the candidate resume against the job description. Return only valid JSON with shape {"matchScore": integer 0-100, "keywordsPresent": string[], "keywordsMissing": string[], "optimizedBullets": [{"before": string, "after": string}]}. Provide at most 10 keywords per list and 3 bullet rewrites. Never invent experience or achievements; improve wording only based on resume evidence.\n\nRESUME TEXT (if provided):\n${resumeText}\n\nJOB DESCRIPTION:\n${jobDescription}`;
-    const geminiResponse = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent", {
+    const geminiResponse = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent", {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-goog-api-key": geminiKey },
       body: JSON.stringify({ contents: [{ parts: [{ text: prompt }, ...(resumeFileBase64 && resumeMimeType ? [{ inlineData: { mimeType: resumeMimeType, data: resumeFileBase64 } }] : [])] }], generationConfig: { responseMimeType: "application/json", temperature: 0.2 } }),
     });
-    if (!geminiResponse.ok) return Response.json({ error: "CV analysis provider returned an error." }, { status: 502, headers: corsHeaders });
+    if (!geminiResponse.ok) {
+      const providerError = await geminiResponse.json().catch(() => null);
+      const detail = typeof providerError?.error?.message === "string" ? providerError.error.message : "Revisa que la API key sea válida y que tenga cuota disponible.";
+      console.error("Gemini API request failed", geminiResponse.status, detail);
+      return Response.json({ error: `Gemini rechazó el análisis (${geminiResponse.status}): ${detail}` }, { status: 502, headers: corsHeaders });
+    }
     const gemini = await geminiResponse.json();
     const raw = gemini.candidates?.[0]?.content?.parts?.[0]?.text;
     const result = JSON.parse(raw);
