@@ -12,8 +12,8 @@ Deno.serve(async (request) => {
   const apiKey = Deno.env.get("SUPABASE_ANON_KEY");
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const geminiKey = Deno.env.get("GEMINI_API_KEY");
-  if (!authorization || !apiKey || !supabaseUrl) return Response.json({ error: "Unauthorized" }, { status: 401, headers: corsHeaders });
-  if (!geminiKey) return Response.json({ error: "GEMINI_API_KEY is not configured for this Supabase project." }, { status: 503, headers: corsHeaders });
+  if (!authorization || !apiKey || !supabaseUrl) return Response.json({ error: "Sesión no válida. Inicia sesión de nuevo e inténtalo." }, { status: 401, headers: corsHeaders });
+  if (!geminiKey) return Response.json({ error: "Falta configurar GEMINI_API_KEY en Supabase. Añade tu clave en Edge Functions → Secrets para habilitar el análisis." }, { status: 503, headers: corsHeaders });
 
   try {
     const userResponse = await fetch(`${supabaseUrl}/auth/v1/user`, { headers: { apikey: apiKey, Authorization: authorization } });

@@ -105,7 +105,14 @@ export function useRenovaSupabase() {
   };
   const analyzeCv = async (resumeText: string, jobDescription: string, resumeFileBase64?: string, resumeMimeType?: string) => {
     const { data, error } = await supabase.functions.invoke("analyze-cv", { body: { resumeText, jobDescription, resumeFileBase64, resumeMimeType } });
-    if (error) throw error;
+    if (error) {
+      let message = error.message;
+      if (error.context instanceof Response) {
+        const body = await error.context.clone().json().catch(() => null);
+        if (typeof body?.error === "string") message = body.error;
+      }
+      throw new Error(message);
+    }
     return data as { matchScore: number; keywordsPresent: string[]; keywordsMissing: string[]; optimizedBullets: Array<{ before: string; after: string }> };
   };
   const uploadAvatar = async (file: File) => {
