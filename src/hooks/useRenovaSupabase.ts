@@ -98,11 +98,6 @@ export function useRenovaSupabase() {
     if (error) throw error;
     setPosts((current) => current.map((post) => post.id === id ? { ...post, likes: post.likes + 1 } : post));
   };
-  const searchJobs = async (keywords: string, location: string) => {
-    const { data, error } = await supabase.functions.invoke("search-jobs", { body: { keywords, location } });
-    if (error) throw error;
-    return data.jobs as Array<{ title: string; company: string; location: string; url: string; match: number | null }>;
-  };
   const analyzeCv = async (resumeText: string, jobDescription: string, resumeFileBase64?: string, resumeMimeType?: string) => {
     const { data, error } = await supabase.functions.invoke("analyze-cv", { body: { resumeText, jobDescription, resumeFileBase64, resumeMimeType } });
     if (error) {
@@ -129,5 +124,5 @@ export function useRenovaSupabase() {
     return data.publicUrl;
   };
 
-  return { session, user, profile, applications, posts, loading, authBusy, signIn, signUp, signOut, addApplication, updateApplication, deleteApplication, addPost, supportPost, searchJobs, analyzeCv, uploadAvatar, refresh: () => user && loadUserData(user) };
+  return { session, user, profile, applications, posts, loading, authBusy, signIn, signUp, signOut, addApplication, updateApplication, deleteApplication, addPost, supportPost, analyzeCv, uploadAvatar, refresh: () => user && loadUserData(user) };
 }
